@@ -29,8 +29,8 @@ contract TicTacToeFactory is Factory {
         emit GameCreated(address(game), _msgSender());
     }
 
-    function deserialize(bytes memory data) internal virtual pure returns (Params memory) {
-        require(data.length == 37, "Invalid data length"); // 2 bytes (uint16) + 20 bytes (address) + 32 bytes (uint) + 1 byte (uint8) = 37 bytes
+    function deserialize(bytes memory data) internal virtual returns (Params memory) {
+        require(data.length == 55, "Invalid data length"); // 2 bytes (uint16) + 20 bytes (address) + 32 bytes (uint) + 1 byte (uint8) = 55 bytes
 
         uint16 _timeoutTime;
         address _tokenAddress;
@@ -38,10 +38,10 @@ contract TicTacToeFactory is Factory {
         uint8 _size;
 
         assembly {
-            _timeoutTime := mload(add(data, 32))
-            _tokenAddress := mload(add(data, 34))
+            _timeoutTime := mload(add(data, 2))
+            _tokenAddress := mload(add(data, 22))
             _coins := mload(add(data, 54))
-            _size := mload(add(data, 86))
+            _size := mload(add(data, 55))
         }
         return Params(_timeoutTime, _tokenAddress, _coins, _size);
     }

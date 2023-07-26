@@ -3,12 +3,26 @@ import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 
+function serialize(obj: {
+  timeoutTime: number;
+  tokenAddress: string;
+  coins: BigNumber;
+  size: number;
+}) {
+  const timeoutTimeBytes = ethers.utils.hexZeroPad(ethers.utils.hexlify(obj.timeoutTime),  2);
+  const tokenAddressBytes = ethers.utils.arrayify(obj.tokenAddress);
+  const coinsBytes = ethers.utils.hexZeroPad(ethers.BigNumber.from(obj.coins).toHexString(),  32);
+  const sizeBytes = ethers.utils.hexZeroPad(ethers.utils.hexlify(obj.size), 1);
+
+  return ethers.utils.concat([timeoutTimeBytes, tokenAddressBytes, coinsBytes, sizeBytes]);
+}
+
 const fee = 2;
 describe("TickTacToe", function() {
   async function deployFixture(size: number) {
     const [owner, user1, user2, treasury] = await ethers.getSigners();
 
-    const Factory = await ethers.getContractFactory("Factory");
+    const Factory = await ethers.getContractFactory("TicTacToeFactory");
     const factoryContract = await Factory.deploy(treasury.address, fee);
 
     const coins = BigNumber.from(100);
@@ -18,20 +32,28 @@ describe("TickTacToe", function() {
     await tokenContract.transfer(user1.address, coins);
     await tokenContract.transfer(user2.address, coins);
     await tokenContract.connect(user1).approve(factoryContract.address, coins);
+    const serializedParams = serialize({
+      timeoutTime: timeout,
+      tokenAddress: tokenContract.address,
+      coins,
+      size,
+    });
+
     const createGameTx = await factoryContract.connect(user1)
-      .createGame(timeout, tokenContract.address, coins, size);
+      .createGame(serializedParams);
     const createGameReceipt = await createGameTx.wait();
 
     const event = createGameReceipt.events?.find(event => event.event == "GameCreated");
     expect(event).to.not.false;
-    const gameContract = await ethers.getContractAt("TicTacToeERC20", event?.args?.game);
+    const gameContract = await ethers.getContractAt("TicTacToeGame", event?.args?.game);
+
     return { tokenContract, gameContract, coins, timeout };
   }
 
   describe("Success cases", function() {
     it("should be correct balances after completion", async function() {
       const [owner, user1, user2, treasury] = await ethers.getSigners();
-      const { tokenContract, gameContract, coins } = await deployFixture(100);
+      const { tokenContract, gameContract, coins } = await deployFixture(99);
 
       expect(await tokenContract.balanceOf(gameContract.address)).to.equal(coins);
 
@@ -141,7 +163,7 @@ describe("TickTacToe", function() {
       const [owner, user1, user2, treasury] = await ethers.getSigners();
       const { tokenContract, gameContract, coins, timeout } = await deployFixture(100);
 
-      await expect(gameContract.connect(user2).cancel()).to.revertedWith('Only creator can cancel game');
+      await expect(gameContract.connect(user2).cancel()).to.revertedWith("Only creator can cancel game");
 
     });
 
@@ -151,7 +173,7 @@ describe("TickTacToe", function() {
 
       await tokenContract.connect(user2).approve(gameContract.address, coins);
       await gameContract.connect(user2).start();
-      await expect(gameContract.connect(user1).cancel()).to.revertedWith('Game has started');
+      await expect(gameContract.connect(user1).cancel()).to.revertedWith("Game has started");
 
     });
 
