@@ -8,7 +8,7 @@ async function main() {
   console.log('Account: '+owner.address);
   console.log('ETH Balance: '+ethers.utils.formatEther(await owner.getBalance()));
 
-  const contractName = "Factory";
+  const contractName = "TicTacToeFactory";
   await new Promise(done => {
     new Confirm("Deploy " + contractName + "?")
       .ask(async (answer: any) => {

@@ -3,8 +3,8 @@ import controllers from "./controllers";
 import commands from "./commands";
 import { EnvModule } from "../env/env.module";
 import { ProviderFactoryService } from "./provider-factory.service";
-import { Connection } from "typeorm";
-import { GameEntity, GamePlayerEntity } from "./entities";
+import { Connection, Repository } from "typeorm";
+import { FactoryEntity, GameEntity, GamePlayerEntity, GameStepEntity } from "./entities";
 import { DatabaseModule } from "../database/database.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigService } from "@nestjs/config";
@@ -17,7 +17,15 @@ const entities = TypeOrmModule.forFeature([GameEntity, GamePlayerEntity]);
   controllers,
   providers: [
     ...commands,
-    ProviderFactoryService,
+    {
+      provide: ProviderFactoryService,
+      useFactory: async (configService: ConfigService, factoryRepository: Repository<FactoryEntity>) => {
+        const factory = new ProviderFactoryService(configService, factoryRepository);
+        await factory.init();
+        return factory;
+      },
+      inject: [ConfigService, "FACTORY_REPOSITORY"],
+    },
     {
       provide: "GAME_REPOSITORY",
       useFactory: (connection: Connection) => connection.getRepository(GameEntity),
@@ -26,6 +34,16 @@ const entities = TypeOrmModule.forFeature([GameEntity, GamePlayerEntity]);
     {
       provide: "GAME_PLAYER_REPOSITORY",
       useFactory: (connection: Connection) => connection.getRepository(GamePlayerEntity),
+      inject: ["DATABASE_CONNECTION"],
+    },
+    {
+      provide: "GAME_STEP_REPOSITORY",
+      useFactory: (connection: Connection) => connection.getRepository(GameStepEntity),
+      inject: ["DATABASE_CONNECTION"],
+    },
+    {
+      provide: "FACTORY_REPOSITORY",
+      useFactory: (connection: Connection) => connection.getRepository(GameStepEntity),
       inject: ["DATABASE_CONNECTION"],
     },
     {
@@ -42,4 +60,5 @@ const entities = TypeOrmModule.forFeature([GameEntity, GamePlayerEntity]);
   ],
   exports: [entities],
 })
-export class GameModule {}
+export class GameModule {
+}

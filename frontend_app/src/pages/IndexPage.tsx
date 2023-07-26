@@ -3,10 +3,15 @@ import { connect } from "react-redux";
 import { CreateTicTacToeModal } from "../components/modals/TicTacToe/CreateTicTacToeModal";
 import { Col, Row } from "reactstrap";
 import { ConfigType } from "../redux/reducers/systemReducer";
+import { useEthers } from "@usedapp/core";
 
 const Component = (props: any) => {
   console.log("props", props);
+  const { account, chainId } = useEthers();
   const { configs }: { configs: ConfigType } = props;
+  if(!account || !chainId){
+    return null;
+  }
   return <div className="mt-5 py-5">
     <Row>
       <Col sm={6}>
@@ -23,7 +28,8 @@ const Component = (props: any) => {
                 <li>1min - 18h step timeout</li>
                 <li>Fee 2%</li>
               </ul>
-              <CreateTicTacToeModal configs={configs} children={(onClick)=>
+              <CreateTicTacToeModal
+                account={account} chainId={chainId} configs={configs} children={(onClick)=>
                 <button onClick={onClick} type="button" className="btn btn-lg btn-block btn-outline-primary">Create a game</button>}/>
             </div>
           </div>

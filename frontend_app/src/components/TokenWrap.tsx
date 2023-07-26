@@ -1,76 +1,59 @@
 import React from "react";
-import { BigNumber, utils } from "ethers";
-import { ethers } from "ethers/lib.esm";
-import { useContractCalls } from "@usedapp/core";
-import ERC20TokenAbi from "../contracts/ERC20.sol/ERC20.json";
+import { Contract, utils } from "ethers";
+import { useCalls, useContractCalls } from "@usedapp/core";
+import ERC20 from "../contracts/ERC20.sol/ERC20.json";
 import { TokenDataType } from "../types/token";
 
 export const TokenWrap = (props: {
-  children: (tokenData:TokenDataType)=>React.ReactElement
+  children: (tokenData: TokenDataType) => React.ReactElement
   setErrors?: (errors: any) => void;
-  account: string | undefined; tokenAddress: string;
+  account: string; tokenAddress: string;
   spenderAddress: string
 }) => {
   const { spenderAddress, account, children, tokenAddress, setErrors } = props;
-
-  let tokenBalance: any = 0;
-  let tokenDecimals: any = 18;
-  let tokenSymbol: any = "";
-  let tokenAllowanceBN: BigNumber = BigNumber.from(0);
-  let tokenBalanceBN: BigNumber = BigNumber.from(0);
-  let name: string;
-  if(tokenAddress && ethers.utils.isAddress(tokenAddress)) {
-    try {
-      const result = useContractCalls([{
-        abi: new utils.Interface(ERC20TokenAbi.abi),
+  try {
+    const contract = new Contract(tokenAddress, ERC20.abi);
+    const result = useCalls([{
+      contract: new Contract(tokenAddress, ERC20.abi),
+      method: "balanceOf",
+      args: [account],
+    }, {
+      contract,
+      method: "decimals",
+      args: [],
+    }, {
+      contract,
+      method: "symbol",
+      args: [],
+    }, {
+      contract,
+      method: "allowance",
+      args: [account, spenderAddress],
+    }, {
+      contract,
+      method: "name",
+      args: [],
+    }]) ?? [];
+    if (result && result.every((item) => item && !item.error)
+    ) {
+      const [
+        tokenBalanceBN, tokenDecimals, tokenSymbol,
+        tokenAllowanceBN, name,
+      ] = result.map((item) => item ? item.value[0] : undefined);
+      return children({
         address: tokenAddress,
-        method: "balanceOf",
-        args: [account],
-      }, {
-        abi: new utils.Interface(ERC20TokenAbi.abi),
-        address: tokenAddress,
-        method: "decimals",
-        args: [],
-      }, {
-        abi: new utils.Interface(ERC20TokenAbi.abi),
-        address: tokenAddress,
-        method: "symbol",
-        args: [],
-      }, {
-        abi: new utils.Interface(ERC20TokenAbi.abi),
-        address: tokenAddress,
-        method: "allowance",
-        args: [account, spenderAddress],
-      }, {
-        abi: new utils.Interface(ERC20TokenAbi.abi),
-        address: tokenAddress,
-        method: "name",
-        args: [],
-      }]) ?? [];
-      if (result && result[0] && result[1] && result[2]
-        && result[3] && result[4]
-      ) {
-        tokenBalanceBN = result[0][0];
-        tokenDecimals = result[1][0];
-        tokenSymbol = result[2][0];
-        tokenAllowanceBN = result[3][0];
-        name = result[4][0];
-        tokenBalance = utils.formatUnits(tokenBalanceBN, tokenDecimals);
-        return children({
-          address: tokenAddress,
-          balance: tokenBalance,
-          decimals: tokenDecimals,
-          symbol: tokenSymbol,
-          allowanceBN: tokenAllowanceBN,
-          name
-        });
-      }
-    } catch (e: unknown) {
-      console.log(e);
-      if(setErrors){
-        if (e && e.toString().match(/call revert exception/)) {
-          setErrors({ tokenAddress: ["Invalid token address"] });
-        }
+        balance: utils.formatUnits(tokenBalanceBN, tokenDecimals),
+        decimals: tokenDecimals,
+        symbol: tokenSymbol,
+        allowanceBN: tokenAllowanceBN,
+        name,
+      });
+    }
+  } catch (e) {
+    console.log("TokenWrap ERROR", e);
+    if (setErrors) {
+      if (e && e.toString().match(/call revert exception/)) {
+        setErrors({ tokenAddress: ["Invalid token address"] });
       }
     }
   }

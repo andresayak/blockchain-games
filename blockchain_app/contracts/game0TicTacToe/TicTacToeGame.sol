@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "./interfaces/IERC20.sol";
-import "./IGame.sol";
+import "../interfaces/IERC20.sol";
+import "../IGame.sol";
 
-contract TicTacToeERC20 is IGame {
+contract TicTacToeGame is IGame {
     enum GameStatus{WAIT, PROGRESS, FINISHED, CANCELED}
     enum Side{NONE, PLAYER1, PLAYER2}
 

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "reactstrap";
-import { useEthers } from "@usedapp/core";
 import { BigNumber } from "ethers";
 import { ConfigType } from "../../../redux/reducers/systemReducer";
 import { ApproveToken } from "../../buttons/ApproveToken";
@@ -12,8 +11,14 @@ import Moment from "react-moment";
 import { ethers } from "ethers/lib.esm";
 import { GameWrap } from "../../GameWrap";
 
-export function PlayTicTacToeModal({ configs, game }: { configs: ConfigType, game: GameDataType }) {
-  const { account } = useEthers();
+type PropType = {
+  account: string;
+  chainId: number;
+  configs: ConfigType;
+  game: GameDataType;
+}
+export function PlayTicTacToeModal(props: PropType) {
+  const { account, chainId, configs, game } = props;
   const [modal, setModal] = useState(false);
   const [allowanceBN, setAllowance] = useState<BigNumber>(BigNumber.from(0));
   const [errors, setErrors] = useState<any>({});

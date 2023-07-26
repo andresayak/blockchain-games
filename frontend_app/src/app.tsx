@@ -6,7 +6,7 @@ import { BSC, BSCTestnet, Config, DAppProvider, Hardhat } from "@usedapp/core";
 import { MetamaskConnector, CoinbaseWalletConnector } from "@usedapp/core";
 
 export const readOnlyUrls: { [k: number]: string } = {
-  [BSC.chainId]: process.env.BSCMAINNET_PROVIDER_URL ?? "https://bsc-dataseed.binance.org/",
+  [BSC.chainId]: process.env.BSCMAINNET_PROVIDER_URL ?? "https://bsc-mainnet.nodereal.io/v1/e07bd56d57074848a3feeac630c11e84",
   [BSCTestnet.chainId]: process.env.BSCTESTNET_PROVIDER_URL ?? "https://data-seed-prebsc-1-s1.binance.org:8545/",
   [Hardhat.chainId]: "http://localhost:8545/",
 };
@@ -18,7 +18,7 @@ export const tokenLists: { [k: number]: string } = {
   [Hardhat.chainId]: "",
 };
 export const dappConfig: Config = {
-  readOnlyChainId: Hardhat.chainId,
+  //readOnlyChainId: Hardhat.chainId,
   readOnlyUrls,
   connectors: {
     metamask: new MetamaskConnector(),

@@ -21,7 +21,7 @@ export const myRoutes = {
 };
 
 export const gameRoutes = {
-  path: "/game/:gameAddress",
+  path: "/game/:chainId/:gameAddress",
   exact: true,
   component: GamePage
 };

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { connect } from "react-redux";
 import { Alert, Col, Row, Table } from "reactstrap";
 import { ConfigType } from "../redux/reducers/systemReducer";
@@ -12,7 +12,7 @@ import { TokenWrap } from "../components/TokenWrap";
 import {
   getExplorerAddressLink,
   getExplorerTransactionLink, shortenAddress,
-  shortenTransactionHash,
+  shortenTransactionHash, useCall, useContractCalls,
   useEthers,
   useLogs,
 } from "@usedapp/core";
@@ -28,6 +28,9 @@ import { GameDataType } from "../types/game";
 import { FactoryWrap } from "../components/FactoryWrap";
 import moment from "moment";
 import { allowNetworks } from "../app";
+import { Steps } from "../components/modals/TicTacToe/Steps";
+import { WrongNetworkModal } from "../components/modals/WrongNetworkModal";
+import { utils } from "ethers";
 
 const GAME_STATUS_WAIT = 0;
 const GAME_STATUS_PROGRESS = 1;
@@ -67,50 +70,69 @@ const Timer = (props: {deadline: number, currentTime: number}) => {
 
 const Component = ({ configs }: { configs: ConfigType }) => {
   const { account, chainId } = useEthers();
-  const { gameAddress } = useParams();
+  const { gameAddress, chainId: needChainId } = useParams();
   const [errors, setErrors] = useState<any>({});
   const [gameData, setGameData] = useState<GameDataType>();
   if (!gameAddress || !ethers.utils.isAddress(gameAddress)) {
     return <Page404 />;
   }
-  const fetchData = useCallback(() => {
+  const fetchData = ()=>{
     axios.get("/api/explore/" + chainId + "/details/" + gameAddress).then(({ data }: {
       data: { game: GameDataType }
     }) => {
+      console.log('set', data.game, chainId);
       setGameData(data.game);
     }).catch((reason) => {
       toast.error(reason.message);
     });
-  }, [chainId, gameAddress]);
-  useEffect(() => {
-    if (chainId) {
-      fetchData();
-    }
-  }, [
-    chainId, gameAddress,
-  ]);
+  };
 
-  const logs = useLogs({
+
+  const result = useCall(gameAddress && {
     contract: new Contract(gameAddress, TicTacToeERC20Abi.abi),
-    event: "GameStep",
+    method: "factory",
     args: [],
   });
-  if (!gameData) {
-    return <></>;
-  }
+
+  console.log('result', result?.value);
+
+  useMemo(() => {
+    if (chainId) {
+      fetchData();
+    }else{
+      setGameData(undefined);
+    }
+  }, [
+    account, chainId, gameAddress,
+  ]);
+
   const chain = allowNetworks.find((chain)=>chain.chainId == chainId);
-  console.log('chain', chain);
-  const currentTime = 0;
+  const needChain = allowNetworks.find((chain)=>chain.chainId == Number(needChainId));
   return <>
     <div className="mt-5 py-5">
-      <h3>{'Blockchain Game Details'}</h3>
-      {account ?
+      <div className="mb-5">
+        <PageTitle title={'Blockchain Game Details'}/>
+        <h5>{gameAddress}</h5>
+        {!!needChain && <WrongNetworkModal isOpen={(!chain || chain.chainId!==needChain.chainId)} chains={[needChain]}/>}
+      </div>
+      {gameData === null && result?.value && <>
+        <div>
+          <dl className="row">
+            <dt className="col-sm-3">Status</dt>
+            <dd className="col-sm-9">
+              Indexing...
+            </dd>
+          </dl>
+        </div>
+      </>}
+      {!!(account && chainId && chain && gameData) &&
         <>
           <div className="mb-3">
-            <FactoryWrap
+            {!!gameData.factoryAddress && <FactoryWrap
               account={account} factoryAddress={gameData.factoryAddress} errors={errors} setErrors={setErrors}
               children={(factoryData) => {
-                console.log("factoryData", factoryData);
+                console.log('factoryData', factoryData);
+
                 return <GameWrap
                   errors={errors} setErrors={setErrors} gameAddress={gameData.address} children={(gameStatusData) => {
                   console.log("gameStatusData", gameStatusData);
@@ -118,16 +140,12 @@ const Component = ({ configs }: { configs: ConfigType }) => {
                   return <TokenWrap
                     tokenAddress={gameData.tokenAddress} account={account} setErrors={setErrors}
                     spenderAddress={gameAddress} children={(tokenData: TokenDataType) => {
+                      console.log('balance', tokenData.balance, gameData.params.coins);
                     return <Row>
                       <Col sm={6}>
                         <dl className="row">
                           <dt className="col-sm-3">Type</dt>
                           <dd className="col-sm-9">Tic Tac Toe</dd>
-                        </dl>
-
-                        <dl className="row">
-                          <dt className="col-sm-3">Contract Address</dt>
-                          <dd className="col-sm-9">{gameAddress}</dd>
                         </dl>
                         <dl className="row">
                           <dt className="col-sm-3">Player1</dt>
@@ -174,7 +192,7 @@ const Component = ({ configs }: { configs: ConfigType }) => {
                         </dl>
                         {gameStatusData.status == GAME_STATUS_WAIT ? <>
                         <span className="me-2">
-                          <PlayTicTacToeModal configs={configs} game={gameData} />
+                          <PlayTicTacToeModal account={account} chainId={chainId} configs={configs} game={gameData} />
                         </span>
                             {gameData?.creatorAddress == account ? <CancelGameModal gameAddress={gameAddress} /> : null}
                           </>
@@ -192,55 +210,13 @@ const Component = ({ configs }: { configs: ConfigType }) => {
                     </Row>;
                   }} />;
                 }} />;
-              }} />
+              }} />}
           </div>
           <div className="mb-3">
             <h3>Steps</h3>
-            <Table>
-              <thead>
-              <tr>
-                <th>
-                  Block
-                </th>
-                <th>
-                  Tx
-                </th>
-                <th>
-                  Side
-                </th>
-                <th>
-                  Cell
-                </th>
-              </tr>
-              </thead>
-              <tbody>
-              {logs && logs.value && logs.value.map((log, index) => <tr key={index}>
-                <td>
-                  {log.blockNumber}
-                </td>
-                <td>
-                  <a
-                    href={chain ? chain.getExplorerTransactionLink(log.transactionHash) : ""}>{shortenTransactionHash(log.transactionHash)}</a>
-                </td>
-                <td>
-                  Player{log.data.side}
-                </td>
-                <td>
-                  {log.data.row} x {log.data.col}
-                </td>
-              </tr>)}
-              </tbody>
-            </Table>
+            <Steps chain={chain} gameAddress={gameAddress}/>
           </div>
-        </>
-        : <div>
-          <Alert color="info">
-            <h4 className="alert-heading">
-              Connect your wallet!
-            </h4>
-            <p>If you don't have a wallet yet, you can select a provider and create one now.</p>
-          </Alert>
-        </div>}
+        </>}
     </div>
   </>;
 };

@@ -14,9 +14,11 @@ type PropType = {
   items: GameDataType[];
   configs: ConfigType;
   account: string;
+  chainId: number;
 }
 
-export const GameList = ({ items, configs, account }: PropType) => {
+export const GameList = (props: PropType) => {
+  const { items, configs, account, chainId } = props;
   return <Table>
     <thead>
     <tr>
@@ -60,8 +62,8 @@ export const GameList = ({ items, configs, account }: PropType) => {
             </div>
           </td>
           <td className="text-end">
-            <Button tag={Link} to={"/game/" + gameData.address} color="light" className="me-2">View</Button>
-            <PlayTicTacToeModal game={gameData} configs={configs} />
+            <Button tag={Link} to={"/game/"+gameData.chainId + '/' + gameData.address} color="light" className="me-2">View</Button>
+            <PlayTicTacToeModal account={account} chainId={chainId} game={gameData} configs={configs} />
           </td>
         </tr>;
       }} />;

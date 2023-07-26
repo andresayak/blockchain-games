@@ -15,6 +15,12 @@ export class GameEntity extends BaseEntity<GameEntity> {
   @Column({ name: "type", type: "varchar", length: "128" })
   type: string;
 
+  @Column({ name: "block_number", type: "integer" })
+  blockNumber: number;
+
+  @Column({ name: "transaction_hash", type: "varchar", length: "128" })
+  transactionHash: string;
+
   @Column({ name: "factoryAddress", type: "varchar", length: "128" })
   factoryAddress: string;
 

@@ -19,7 +19,7 @@ async function main() {
 
   const response = await prompts(questions);
 
-  const FactoryContract = await ethers.getContractFactory('Factory');
+  const FactoryContract = await ethers.getContractFactory('TicTacToeFactory');
   const factoryContract = await FactoryContract.deploy(owner.address, 2);
   await factoryContract.deployed();
   console.log(

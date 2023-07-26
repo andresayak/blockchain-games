@@ -1,14 +1,20 @@
 import React from "react";
 import { Modal, ModalBody, ModalHeader } from "reactstrap";
+import { Chain } from "@usedapp/core";
 
-export function WrongNetworkModal() {
-
+type PropType = {
+  isOpen: boolean;
+  chains: Chain[];
+}
+export function WrongNetworkModal(props: PropType) {
+  const {isOpen, chains} = props;
+  const labels = chains.map(chain=>chain.chainName).join(', ');
   return (
     <div>
-      <Modal isOpen={true}>
+      <Modal isOpen={isOpen}>
         <ModalHeader>Wrong network</ModalHeader>
         <ModalBody>
-          Please use Binance Smart Chain Mainnet or Testnet.
+          Please use {labels}.
         </ModalBody>
       </Modal>
     </div>

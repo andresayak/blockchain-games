@@ -18,6 +18,13 @@ export type TokenItemType = {
   balance?: string;
 }
 
+type PropType = {
+  account: string;
+  chainId: number;
+  spenderAddress: string;
+  selectToken: (tokenAddress: string) => void;
+};
+
 const addToRecentList = (chainId: number, token: TokenItemType) => {
   let items: TokenItemType[] = [];
   const recentListKey = "recentList" + chainId;
@@ -25,10 +32,10 @@ const addToRecentList = (chainId: number, token: TokenItemType) => {
   if (data) {
     items = JSON.parse(data);
   }
-  items = items.filter((item)=>item.address!=token.address);
+  items = items.filter((item) => item.address != token.address);
   items = [token, ...items];
 
-  console.log('items', items);
+  console.log("items", items);
   localStorage.setItem(recentListKey, JSON.stringify(items));
 };
 
@@ -42,7 +49,7 @@ export const RecentList = ({ selectToken, chainId }: {
 
   useEffect(() => {
     const data = localStorage.getItem(recentListKey);
-    console.log('data', data);
+    console.log("data", data);
     if (data) {
       const items = JSON.parse(data);
       if (items) {
@@ -51,13 +58,13 @@ export const RecentList = ({ selectToken, chainId }: {
     }
   }, [chainId]);
 
-  if(!items.length){
+  if (!items.length) {
     return null;
   }
   return <div className="p-3">
     {items.map((token, index) => {
       return <React.Fragment key={index}>
-        <Button onClick={()=>selectToken(token)} color="light" className="me-2">{token.symbol}</Button>
+        <Button onClick={() => selectToken(token)} color="light" className="me-2">{token.symbol}</Button>
       </React.Fragment>;
     })}
   </div>;
@@ -87,11 +94,8 @@ export const RenderTokenItem = ({ token, selectToken }: {
   </div>;
 };
 
-export const TokenList = ({ spenderAddress, selectToken }: {
-  spenderAddress: string,
-  selectToken: (tokenAddress: string) => void
-}) => {
-  const { account, chainId } = useEthers();
+export const TokenList = (props: PropType) => {
+  const { account, chainId, spenderAddress, selectToken } = props;
 
   const [items, setItems] = useState<TokenItemType[]>([]);
   const [tokenValue, setTokenValue] = useState<string>("");
@@ -117,7 +121,7 @@ export const TokenList = ({ spenderAddress, selectToken }: {
     fetchData();
   }, [chainId]);
 
-  if(!chainId){
+  if (!chainId) {
     return null;
   }
   let filteredItems = items;
@@ -140,19 +144,20 @@ export const TokenList = ({ spenderAddress, selectToken }: {
     <Scrollbars style={{ width: "100%", height: 300 }}>
       <div className="tokenList">
         {!filteredItems.length && ethers.utils.isAddress(tokenValue) ? <div>
-          <TokenWrap account={account} spenderAddress={spenderAddress} tokenAddress={tokenValue}
-                     children={(tokenData) => {
-                       if (!tokenData) {
-                         return <div className="p-3 text-center">token not found</div>;
-                       }
-                       return <RenderTokenItem selectToken={selectTokenAndSaveToRecent} token={{
-                         address: tokenData?.address,
-                         name: tokenData?.name,
-                         symbol: tokenData?.symbol,
-                         decimals: tokenData?.decimals,
-                         balance: tokenData?.balance,
-                       }} />;
-                     }} />
+          <TokenWrap
+            account={account} spenderAddress={spenderAddress} tokenAddress={tokenValue}
+            children={(tokenData) => {
+              if (!tokenData) {
+                return <div className="p-3 text-center">token not found</div>;
+              }
+              return <RenderTokenItem selectToken={selectTokenAndSaveToRecent} token={{
+                address: tokenData?.address,
+                name: tokenData?.name,
+                symbol: tokenData?.symbol,
+                decimals: tokenData?.decimals,
+                balance: tokenData?.balance,
+              }} />;
+            }} />
         </div> : null}
         {filteredItems.map((token, index) => {
           return <React.Fragment key={index}>

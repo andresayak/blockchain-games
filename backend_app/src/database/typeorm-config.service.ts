@@ -19,7 +19,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       entities: [__dirname + "/../**/*.entity{.ts,.js}"],
       migrationsTableName: "custom_migration_table",
       migrations: [join(__dirname, "migrations/*{.ts,.js}")],
-      logging: true,
+      logging: false,
     };
   }
 

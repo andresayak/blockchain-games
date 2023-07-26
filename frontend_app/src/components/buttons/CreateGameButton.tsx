@@ -24,7 +24,7 @@ export const CreateGameButton = (props: {
   const contract = new Contract(contractAddress, FactoryAbi.abi);
   const { state, send, events } = useContractFunction(contract, "createGame");
   const [attems, setAttems] = useState<number>(0);
-
+console.log('contractAddress', contractAddress);
   useMemo(() => {
     if (state.status == "Exception")
       if (state.errorMessage)

@@ -1,34 +1,42 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { BSC, BSCTestnet, Hardhat } from "../chains";
 import { ethers } from "ethers";
+import { Repository } from "typeorm";
+import { FactoryEntity } from "./entities";
 
 @Injectable()
 export class ProviderFactoryService {
   public chains: {
     [k: number]: {
-      providerUrl: string;
-      publicConfig: {
-        FACTORY_ADDRESS: string;
-      };
+      providerHttpUrl: string;
+      providerWsUrl: string;
+      publicConfig: { [k: string]: string };
     };
   } = {};
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject("FACTORY_REPOSITORY")
+    private readonly factoryRepository: Repository<FactoryEntity>,
+  ) {
     this.chains = {
       [BSC.chainId]: {
-        providerUrl: this.configService.get("BSCMAINNET_PROVIDER_URL"),
+        providerHttpUrl: this.configService.get("BSCMAINNET_PROVIDER_HTTP_URL"),
+        providerWsUrl: this.configService.get("BSCMAINNET_PROVIDER_WS_URL"),
         publicConfig: {
           FACTORY_ADDRESS: this.configService.get("FACTORY_ADDRESS_BSC"),
         },
       },
       [BSCTestnet.chainId]: {
-        providerUrl: this.configService.get("BSCTESTNET_PROVIDER_URL"),
+        providerHttpUrl: this.configService.get("BSCTESTNET_PROVIDER_HTTP_URL"),
+        providerWsUrl: this.configService.get("BSCTESTNET_PROVIDER_WS_URL"),
         publicConfig: {
           FACTORY_ADDRESS: this.configService.get("FACTORY_ADDRESS_BSCTESTNET"),
         },
       },
       [Hardhat.chainId]: {
-        providerUrl: this.configService.get("HARDHAT_PROVIDER_URL"),
+        providerHttpUrl: this.configService.get("HARDHAT_PROVIDER_HTTP_URL"),
+        providerWsUrl: this.configService.get("HARDHAT_PROVIDER_WS_URL"),
         publicConfig: {
           FACTORY_ADDRESS: this.configService.get("FACTORY_ADDRESS_HARDHAT"),
         },
@@ -36,10 +44,23 @@ export class ProviderFactoryService {
     };
   }
 
-  create(chainId: number) {
+  async init() {
+    const factories = await this.factoryRepository.find();
+    for (const factory of factories) {
+      this.chains[factory.chainId].publicConfig["FACTORY_ADDRESS_" + factory.type] = factory.address;
+    }
+  }
+
+  create(chainId: number, type: "ws" | "http" = "http") {
     if (!this.chains[chainId]) {
       throw Error("wrong chain");
     }
-    return new ethers.JsonRpcProvider(this.chains[chainId].providerUrl);
+    console.log(this.chains[chainId]);
+    if (type == "http") {
+      return new ethers.JsonRpcProvider(this.chains[chainId].providerHttpUrl);
+    }
+    if (type == "ws") {
+      return new ethers.WebSocketProvider(this.chains[chainId].providerWsUrl);
+    }
   }
 }

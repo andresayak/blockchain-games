@@ -67,7 +67,7 @@ const Component = ({configs}: {configs:ConfigType}) => {
       <Tabs tab={tab} setTab={setTab} items={tabs}/>
       <Row>
         <Col sm={12}>
-          <GameList items={items} configs={configs} account={account}/>
+          <GameList account={account} chainId={chainId} items={items} configs={configs}/>
         </Col>
       </Row>
     </div>

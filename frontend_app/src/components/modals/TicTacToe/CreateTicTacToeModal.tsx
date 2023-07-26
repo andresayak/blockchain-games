@@ -13,9 +13,16 @@ import { LogDescription } from "ethers/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { TokenList } from "../../TokenList";
 
-export function CreateTicTacToeModal({ configs, children }: { configs: ConfigType, children: (onClick: ()=>void) => React.ReactElement }) {
+type PropType = {
+  account: string;
+  chainId: number;
+  configs: ConfigType;
+  children: (onClick: ()=>void) => React.ReactElement;
+}
+export function CreateTicTacToeModal(props:PropType) {
+  const {configs, account, children, chainId} = props;
   const navigate = useNavigate();
-  const { account } = useEthers();
+
   const [modal, setModal] = useState(false);
   const [allowanceBN, setAllowance] = useState<BigNumber>(BigNumber.from(0));
   const [errors, setErrors] = useState<any>({});
@@ -43,8 +50,10 @@ export function CreateTicTacToeModal({ configs, children }: { configs: ConfigTyp
       {children(toggle)}
       <Modal isOpen={modal} toggle={toggle}>
         <ModalHeader>Creating a Tic Tac Toe Game</ModalHeader>
-        {!values.tokenAddress && <TokenList selectToken={(tokenAddress)=>onChange('tokenAddress', tokenAddress)} spenderAddress={configs.FACTORY_ADDRESS}/>}
-        <TokenWrap
+        {!values.tokenAddress && <TokenList
+          account={account} chainId={chainId}
+          selectToken={(tokenAddress)=>onChange('tokenAddress', tokenAddress)} spenderAddress={configs.FACTORY_ADDRESS}/>}
+        {!!values.tokenAddress && <TokenWrap
           tokenAddress={values.tokenAddress} account={account} setErrors={setErrors}
           spenderAddress={configs.FACTORY_ADDRESS} children={(tokenData?: TokenDataType) => {
           const currentAllowanceBN = !tokenData || allowanceBN.gt(tokenData.allowanceBN) ? allowanceBN : tokenData.allowanceBN;
@@ -85,14 +94,14 @@ export function CreateTicTacToeModal({ configs, children }: { configs: ConfigTyp
                   callback={(event: LogDescription) => {
                     const gameAddress = event.args.game;
                     toggle();
-                    navigate("/game/" + gameAddress);
+                    navigate("/game/" + chainId + "/" + gameAddress);
                   }}
                   amountBN={amountBN}
                   values={values} />
               </>}
               <Button color="light" onClick={toggle} block>Cancel</Button>
             </ModalFooter></>;
-        }} />
+        }} />}
       </Modal>
     </>
   );

@@ -1,8 +1,7 @@
 import { MigrationInterface, QueryRunner, Table } from "typeorm";
 
-const name = "games";
-
-export class Games1690135469242 implements MigrationInterface {
+const name = "factories";
+export class Factories1690363563712 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
@@ -21,44 +20,12 @@ export class Games1690135469242 implements MigrationInterface {
             isNullable: true,
           },
           {
-            name: "block_number",
-            type: "integer",
-          },
-          {
-            name: "transaction_hash",
-            type: "varchar(128)",
-            isNullable: true,
-          },
-          {
             name: "address",
             type: "varchar(128)",
             isNullable: true,
           },
           {
-            name: "tokenAddress",
-            type: "varchar(128)",
-            isNullable: true,
-          },
-          {
-            name: "factoryAddress",
-            type: "varchar(128)",
-            isNullable: true,
-          },
-          {
-            name: "creatorAddress",
-            type: "varchar(128)",
-            isNullable: true,
-          },
-          {
-            name: "params",
-            type: "jsonb",
-          },
-          {
             name: "chainId",
-            type: "integer",
-          },
-          {
-            name: "status",
             type: "integer",
           },
           {
