@@ -43,7 +43,7 @@ const entities = TypeOrmModule.forFeature([GameEntity, GamePlayerEntity]);
     },
     {
       provide: "FACTORY_REPOSITORY",
-      useFactory: (connection: Connection) => connection.getRepository(GameStepEntity),
+      useFactory: (connection: Connection) => connection.getRepository(FactoryEntity),
       inject: ["DATABASE_CONNECTION"],
     },
     {

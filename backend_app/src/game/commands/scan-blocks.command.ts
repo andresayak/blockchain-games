@@ -5,13 +5,11 @@ import { ProviderFactoryService } from "../provider-factory.service";
 import { Contract, Provider } from "ethers";
 import * as TicTacToeERC20 from "../../contracts/TicTacToeERC20.sol/TicTacToeERC20.json";
 import * as Factory from "../../contracts/Factory.sol/Factory.json";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
 import { FactoryEntity, GameEntity, GamePlayerEntity, GameStepEntity, Statuses } from "../entities";
 import { RedisClientType } from "redis";
 
 type PropsType = {
-  factoryAddress: string;
-  factoryContract: Contract;
   provider: Provider;
   chainId: number;
 };
@@ -47,10 +45,17 @@ export class ScanBlocksCommand {
   ) {
     const providerWs = this.providerFactoryService.create(chainId, "ws");
     const providerHttp = this.providerFactoryService.create(chainId, "http");
-    const factoryAddress = this.providerFactoryService.chains[chainId].publicConfig.FACTORY_ADDRESS;
 
-    const factoryContract = new Contract(factoryAddress, Factory.abi, providerHttp);
-    const lastBlock = await this.lastBlock(factoryContract.birthdayBlock());
+    if (
+      !(await this.factoryRepository.countBy({
+        chainId,
+      }))
+    ) {
+      throw Error(`Not found factories for this chain [chainId = ${chainId}]`);
+    }
+    await this.saveBirthdayBlock({ chainId, provider: providerHttp });
+
+    const lastBlock = await this.lastBlock(chainId);
     let currentBlock = await providerHttp.getBlockNumber();
     console.log("currentBlock", currentBlock);
     this.lastProcessBlock = 0;
@@ -60,7 +65,7 @@ export class ScanBlocksCommand {
     // eslint-disable-next-line no-async-promise-executor
     new Promise(async done => {
       for (let blockNumber = lastBlock; blockNumber <= currentBlock; blockNumber++) {
-        await this.processBlock(blockNumber, { factoryAddress, factoryContract, chainId, provider: providerHttp });
+        await this.processBlock(blockNumber, { chainId, provider: providerHttp });
       }
       console.log("Synced old!");
       syncOld = true;
@@ -73,14 +78,32 @@ export class ScanBlocksCommand {
       const used = process.memoryUsage().heapUsed / 1024 / 1024;
       console.log(timeStart, ` --------- new block [${blockNumber}] live blocks: ${liveCount} memory ${Math.round(used * 100) / 100} MB`);
       if (syncOld && blockNumber > this.lastProcessBlock) {
-        this.processBlock(blockNumber, { factoryAddress, factoryContract, chainId, provider: providerHttp });
+        this.processBlock(blockNumber, { chainId, provider: providerHttp });
       }
     });
   }
 
+  async saveBirthdayBlock(props: PropsType) {
+    const { chainId, provider } = props;
+    const factories = await this.factoryRepository.find({
+      where: {
+        chainId,
+        blockNumber: IsNull(),
+      },
+    });
+    for (const factory of factories) {
+      const factoryContract = new Contract(factory.address, Factory.abi, provider);
+      const blockNumber = await factoryContract.birthdayBlock();
+      factory.fill({
+        blockNumber,
+      });
+      await this.factoryRepository.save(factory);
+    }
+  }
+
   async processBlock(blockNumber: number, props: PropsType) {
     console.log("processBlock", blockNumber);
-    const { chainId, factoryAddress, provider } = props;
+    const { chainId, provider } = props;
 
     const logs = await provider.getLogs({
       fromBlock: blockNumber,
@@ -88,45 +111,42 @@ export class ScanBlocksCommand {
     });
 
     for (const log of logs) {
-      if (log.address == factoryAddress) {
-        const factory = await this.factoryRepository.findOne({
-          where: {
-            chainId,
-            address: log.address,
-          },
-        });
-        if (factory) {
-          const factoryContract = new Contract(factoryAddress, Factory.abi, provider);
-          const fragment = factoryContract.interface.getEvent(log.topics[0]);
-          const args = factoryContract.interface.decodeEventLog(fragment, log.data, log.topics);
-          console.log("factoryLog", fragment, args);
-          if (fragment) {
-            if (fragment.name == "GameCreated") {
-              await this.saveNewGame(args[0], args[1], factory.address, blockNumber, log.transactionHash, props);
-            }
+      const factory = await this.factoryRepository.findOne({
+        where: {
+          chainId,
+          address: log.address,
+        },
+      });
+      if (factory) {
+        const factoryContract = new Contract(factory.address, Factory.abi, provider);
+        const fragment = factoryContract.interface.getEvent(log.topics[0]);
+        const args = factoryContract.interface.decodeEventLog(fragment, log.data, log.topics);
+        console.log("factoryLog", fragment, args);
+        if (fragment) {
+          if (fragment.name == "GameCreated") {
+            await this.saveNewGame(args[0], args[1], factory.address, blockNumber, log.transactionHash, props);
           }
         }
-      } else {
-        const game = await this.gameRepository.findOne({
-          where: {
-            chainId,
-            address: log.address,
-          },
-        });
-        if (game) {
-          const gameContract = new Contract(game.address, TicTacToeERC20.abi, provider);
-          const fragment = gameContract.interface.getEvent(log.topics[0]);
-          const args = gameContract.interface.decodeEventLog(fragment, log.data, log.topics);
-          if (fragment) {
-            if (fragment.name == "GameStart") {
-              await this.saveStartGame(args[0], game, Statuses.PROGRESS);
-            }
-            if (fragment.name == "GameEnded") {
-              await this.saveEndGame(game);
-            }
-            if (fragment.name == "GameStep") {
-              await this.saveStepGame(blockNumber, log.transactionHash, args, game);
-            }
+      }
+      const game = await this.gameRepository.findOne({
+        where: {
+          chainId,
+          address: log.address,
+        },
+      });
+      if (game) {
+        const gameContract = new Contract(game.address, TicTacToeERC20.abi, provider);
+        const fragment = gameContract.interface.getEvent(log.topics[0]);
+        const args = gameContract.interface.decodeEventLog(fragment, log.data, log.topics);
+        if (fragment) {
+          if (fragment.name == "GameStart") {
+            await this.saveStartGame(args[0], game, Statuses.PROGRESS);
+          }
+          if (fragment.name == "GameEnded") {
+            await this.saveEndGame(game);
+          }
+          if (fragment.name == "GameStep") {
+            await this.saveStepGame(blockNumber, log.transactionHash, args, game);
           }
         }
       }
@@ -183,14 +203,24 @@ export class ScanBlocksCommand {
     });
   }
 
-  async lastBlock(defaultValue: Promise<bigint>) {
+  async lastBlock(chainId: number) {
     const lastBlock = await this.redisClient.get("lastBlock");
     const number = parseInt(lastBlock);
     if (number) {
       return number;
     }
-    const birthdayBlock = Number(await defaultValue);
-    return birthdayBlock;
+    const result = await this.factoryRepository
+      .createQueryBuilder()
+      .select("MIN(block_number)", "minimum")
+      .where({
+        chainId,
+      })
+      .getRawOne();
+
+    if (result) {
+      return result.minimum;
+    }
+    throw Error("not have minimum");
   }
 
   async saveNewGame(gameAddress: string, creatorAddress: string, factoryAddress: string, blockNumber: number, transactionHash: string, props: PropsType) {

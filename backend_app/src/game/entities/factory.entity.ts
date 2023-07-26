@@ -6,6 +6,9 @@ export class FactoryEntity extends BaseEntity<FactoryEntity> {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ name: "block_number", type: "integer" })
+  blockNumber: number;
+
   @Column({ name: "type", type: "varchar", length: "128" })
   type: string;
 

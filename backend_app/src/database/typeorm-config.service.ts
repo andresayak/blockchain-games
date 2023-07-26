@@ -19,7 +19,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       entities: [__dirname + "/../**/*.entity{.ts,.js}"],
       migrationsTableName: "custom_migration_table",
       migrations: [join(__dirname, "migrations/*{.ts,.js}")],
-      logging: false,
+      logging: true,
     };
   }
 
@@ -32,7 +32,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       password: this.configService.get("POSTGRES_PASSWORD"),
       database: this.configService.get("POSTGRES_DB"),
       autoLoadEntities: true,
-      synchronize: false,
+      synchronize: true,
     };
   }
 }

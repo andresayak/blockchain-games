@@ -15,6 +15,11 @@ export class Factories1690363563712 implements MigrationInterface {
             generationStrategy: "increment",
           },
           {
+            name: "block_number",
+            type: "integer",
+            isNullable: true,
+          },
+          {
             name: "type",
             type: "varchar(128)",
             isNullable: true,

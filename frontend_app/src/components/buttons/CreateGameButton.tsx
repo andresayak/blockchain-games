@@ -1,10 +1,25 @@
 import { useContractFunction, useEthers } from "@usedapp/core";
 import React, { useCallback, useMemo, useState } from "react";
-import { BigNumber, Contract } from "ethers";
+import { utils, BigNumber, Contract } from "ethers";
 import FactoryAbi from "../../contracts/Factory.sol/Factory.json";
 import { toast } from "react-toastify";
 import { Button } from "reactstrap";
 import { LogDescription } from "ethers/lib/utils";
+
+function serialize(obj: {
+  timeoutTime: number;
+  tokenAddress: string;
+  coins: BigNumber;
+  size: number;
+}) {
+  const timeoutTimeBytes = utils.hexZeroPad(utils.hexlify(obj.timeoutTime),  2);
+  const tokenAddressBytes = utils.arrayify(obj.tokenAddress);
+  const coinsBytes = utils.hexZeroPad(BigNumber.from(obj.coins).toHexString(),  32);
+  const sizeBytes = utils.hexZeroPad(utils.hexlify(obj.size), 1);
+
+  return utils.concat([timeoutTimeBytes, tokenAddressBytes, coinsBytes, sizeBytes]);
+}
+
 
 export const CreateGameButton = (props: {
   callback: (event: LogDescription) => void;
@@ -39,7 +54,14 @@ console.log('contractAddress', contractAddress);
 
   const createGame = useCallback(
     async (...args: any[]) => {
-      await send(values.timeout, values.tokenAddress, amountBN, values.size);
+      const bytes = serialize({
+        timeoutTime: parseInt(values.timeout),
+        tokenAddress: values.tokenAddress,
+        coins: amountBN,
+        size: parseInt(values.size)
+      });
+      console.log('bytes', bytes);
+      await send(bytes);
     },
     [library, values, amountBN, state.status, attems, events],
   );
