@@ -1,16 +1,12 @@
 import * as types from "../constants";
 
-export type ConfigType = {
-  FACTORY_ADDRESS: string;
-}
+export type ConfigType = { [key: string]: string};
 
 const initialState = {
   loaded: false,
   loader: false,
   loader_progress: 0,
-  configs: {
-    FACTORY_ADDRESS: null,
-  },
+  configs: {},
 };
 
 export default function reducer(state = initialState, action: any) {

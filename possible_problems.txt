@@ -1,0 +1,4 @@
+1) save wrong multicall address to localstorage
+ - clear localstorage
+2) Nonce too high. Expected nonce to be 1 but got 2. Note that
+ - clear metamask history

@@ -1,7 +1,6 @@
 import { useContractFunction, useEthers } from "@usedapp/core";
 import React, { useCallback, useMemo, useState } from "react";
 import { utils, BigNumber, Contract } from "ethers";
-import FactoryAbi from "../../contracts/Factory.sol/Factory.json";
 import { toast } from "react-toastify";
 import { Button } from "reactstrap";
 import { LogDescription } from "ethers/lib/utils";
@@ -20,6 +19,40 @@ function serialize(obj: {
   return utils.concat([timeoutTimeBytes, tokenAddressBytes, coinsBytes, sizeBytes]);
 }
 
+const FactoryAbi = [
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "createGame",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "game",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
+      }
+    ],
+    "name": "GameCreated",
+    "type": "event"
+  },
+];
 
 export const CreateGameButton = (props: {
   callback: (event: LogDescription) => void;
@@ -35,11 +68,10 @@ export const CreateGameButton = (props: {
 }) => {
   const { callback, values, disabled, amountBN, contractAddress } = props;
   const { library, account, chainId } = useEthers();
-  const [loading, setLoading] = useState<boolean>(false);
-  const contract = new Contract(contractAddress, FactoryAbi.abi);
+  const contract = new Contract(contractAddress, FactoryAbi);
   const { state, send, events } = useContractFunction(contract, "createGame");
   const [attems, setAttems] = useState<number>(0);
-console.log('contractAddress', contractAddress);
+
   useMemo(() => {
     if (state.status == "Exception")
       if (state.errorMessage)
@@ -52,6 +84,7 @@ console.log('contractAddress', contractAddress);
     }
   }, [state.status, attems, events]);
 
+  console.log('state', state);
   const createGame = useCallback(
     async (...args: any[]) => {
       const bytes = serialize({
@@ -60,20 +93,18 @@ console.log('contractAddress', contractAddress);
         coins: amountBN,
         size: parseInt(values.size)
       });
-      console.log('bytes', bytes);
       await send(bytes);
     },
     [library, values, amountBN, state.status, attems, events],
   );
 
   if (state.status == "Success") {
-    console.log('events', events);
     return <Button color="primary" size={"lg"} block className="mr-1" disabled={true}>Finished</Button>;
   }
 
   return <Button
     color="primary" size={"lg"} block className="mr-1"
-    disabled={state.status == "Mining" || disabled || loading} onClick={createGame}>
+    disabled={state.status == "Mining" || disabled} onClick={createGame}>
     {state.status == "Mining" ? "Mining..." : "Confirm"}
   </Button>;
 };

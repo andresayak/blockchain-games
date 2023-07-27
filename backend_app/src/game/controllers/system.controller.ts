@@ -6,6 +6,7 @@ export class SystemController {
   constructor(private readonly providerFactoryService: ProviderFactoryService) {}
   @Get("main/:chainId")
   async main(@Param("chainId") chainId: number) {
+    await this.providerFactoryService.init();
     const configs = this.providerFactoryService.chains;
     if (!configs[chainId]) {
       return {};

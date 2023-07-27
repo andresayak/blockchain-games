@@ -3,7 +3,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ProviderFactoryService } from "../provider-factory.service";
 import { Contract, Provider } from "ethers";
-import * as TicTacToeERC20 from "../../contracts/TicTacToeERC20.sol/TicTacToeERC20.json";
+import * as TicTacToeERC20 from "../../contracts/game0TicTacToe/TicTacToeGame.sol/TicTacToeGame.json";
 import * as Factory from "../../contracts/Factory.sol/Factory.json";
 import { IsNull, Repository } from "typeorm";
 import { FactoryEntity, GameEntity, GamePlayerEntity, GameStepEntity, Statuses } from "../entities";

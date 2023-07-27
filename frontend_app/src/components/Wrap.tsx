@@ -9,7 +9,6 @@ const Component = (props: any) => {
   const { systemMainFetch} = props;
   useEffect(() => {
     if (chainId) {
-        console.log('chainId' , chainId);
         systemMainFetch(chainId);
     }
   }, [chainId]);

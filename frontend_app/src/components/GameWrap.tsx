@@ -2,7 +2,7 @@ import React from "react";
 import { utils } from "ethers";
 import { ethers } from "ethers/lib.esm";
 import { useContractCalls } from "@usedapp/core";
-import TicTacToeERC20Abi from "../contracts/TicTacToeERC20.sol/TicTacToeERC20.json";
+import TicTacToeERC20Abi from "../contracts/game0TicTacToe/TicTacToeGame.sol/TicTacToeGame.json";
 import { GameStatusType } from "../types/game";
 
 export const GameWrap = (props: {

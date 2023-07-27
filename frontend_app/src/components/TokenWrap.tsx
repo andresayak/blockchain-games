@@ -1,6 +1,6 @@
 import React from "react";
 import { Contract, utils } from "ethers";
-import { useCalls, useContractCalls } from "@usedapp/core";
+import { useCalls } from "@usedapp/core";
 import ERC20 from "../contracts/ERC20.sol/ERC20.json";
 import { TokenDataType } from "../types/token";
 
@@ -14,7 +14,7 @@ export const TokenWrap = (props: {
   try {
     const contract = new Contract(tokenAddress, ERC20.abi);
     const result = useCalls([{
-      contract: new Contract(tokenAddress, ERC20.abi),
+      contract,
       method: "balanceOf",
       args: [account],
     }, {

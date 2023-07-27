@@ -10,14 +10,12 @@ import { GameWrap } from "../components/GameWrap";
 import { TokenDataType } from "../types/token";
 import { TokenWrap } from "../components/TokenWrap";
 import {
-  getExplorerAddressLink,
-  getExplorerTransactionLink, shortenAddress,
-  shortenTransactionHash, useCall, useContractCalls,
+  shortenAddress,
+  useCall,
   useEthers,
-  useLogs,
 } from "@usedapp/core";
 import { Contract } from "@ethersproject/contracts";
-import TicTacToeERC20Abi from "../contracts/TicTacToeERC20.sol/TicTacToeERC20.json";
+import TicTacToeERC20Abi from "../contracts/game0TicTacToe/TicTacToeGame.sol/TicTacToeGame.json";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { PlayTicTacToeModal } from "../components/modals/TicTacToe/PlayTicTacToeModal";
@@ -87,6 +85,24 @@ const Component = ({ configs }: { configs: ConfigType }) => {
     });
   };
 
+  useEffect(() => {
+    const sse = new EventSource('/api/explore/'+chainId+'/sse',
+      { withCredentials: true });
+    function getRealtimeData(data:any) {
+      console.log('data', data);
+      // process the data here,
+      // then pass it to state to be rendered
+    }
+    sse.onmessage = e => getRealtimeData(JSON.parse(e.data));
+    sse.onerror = () => {
+      // error log here
+
+      sse.close();
+    }
+    return () => {
+      sse.close();
+    };
+  }, [chainId, gameAddress]);
 
   const result = useCall(gameAddress && {
     contract: new Contract(gameAddress, TicTacToeERC20Abi.abi),

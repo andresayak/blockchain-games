@@ -1,7 +1,7 @@
 import { useContractFunction, useEthers } from "@usedapp/core";
 import React, { useCallback, useMemo, useState } from "react";
 import { Contract } from "ethers";
-import TicTacToeERC20 from "../../contracts/TicTacToeERC20.sol/TicTacToeERC20.json";
+import TicTacToeERC20 from "../../contracts/game0TicTacToe/TicTacToeGame.sol/TicTacToeGame.json";
 import { toast } from "react-toastify";
 import { Button } from "reactstrap";
 

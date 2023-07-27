@@ -130,6 +130,7 @@ export const TokenList = (props: PropType) => {
     filteredItems = filteredItems.filter((item) => item.address.match(matchValue) || item.name.match(matchValue));
   }
   filteredItems = filteredItems.filter((item, index) => index < 100);
+  console.log('tokenValue', tokenValue);
   return <>
     <div className="p-3 border-bottom">
       <FormGroup className="mr-1">

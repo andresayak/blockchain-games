@@ -9,6 +9,7 @@ import { DatabaseModule } from "../database/database.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "redis";
+import { NotificationService } from "./notification.service";
 
 const entities = TypeOrmModule.forFeature([GameEntity, GamePlayerEntity]);
 
@@ -17,6 +18,7 @@ const entities = TypeOrmModule.forFeature([GameEntity, GamePlayerEntity]);
   controllers,
   providers: [
     ...commands,
+    NotificationService,
     {
       provide: ProviderFactoryService,
       useFactory: async (configService: ConfigService, factoryRepository: Repository<FactoryEntity>) => {
@@ -60,5 +62,4 @@ const entities = TypeOrmModule.forFeature([GameEntity, GamePlayerEntity]);
   ],
   exports: [entities],
 })
-export class GameModule {
-}
+export class GameModule {}

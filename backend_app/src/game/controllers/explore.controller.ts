@@ -1,12 +1,15 @@
-import { Controller, Get, Inject, Param, ParseIntPipe } from "@nestjs/common";
+import { Controller, Get, Inject, Param, ParseIntPipe, Sse } from "@nestjs/common";
 import { In, Repository } from "typeorm";
 import { GameEntity, Statuses } from "../entities";
+import { Observable } from "rxjs";
+import { NotificationService } from "../notification.service";
 
 @Controller("explore/:chainId")
 export class ExploreController {
   constructor(
     @Inject("GAME_REPOSITORY")
     private readonly gameRepository: Repository<GameEntity>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   getItems(chainId: number, status: Statuses | Statuses[]) {
@@ -53,5 +56,10 @@ export class ExploreController {
     return {
       game,
     };
+  }
+
+  @Sse("sse")
+  sse(@Param("chainId", ParseIntPipe) chainId: number, @Param("address") address: string): Promise<Observable<any>> {
+    return this.notificationService.handleConnection(chainId, address);
   }
 }
