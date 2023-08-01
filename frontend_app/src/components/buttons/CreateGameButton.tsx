@@ -67,7 +67,7 @@ export const CreateGameButton = (props: {
   contractAddress: string;
 }) => {
   const { callback, values, disabled, amountBN, contractAddress } = props;
-  const { library, account, chainId } = useEthers();
+  const { library } = useEthers();
   const contract = new Contract(contractAddress, FactoryAbi);
   const { state, send, events } = useContractFunction(contract, "createGame");
   const [attems, setAttems] = useState<number>(0);

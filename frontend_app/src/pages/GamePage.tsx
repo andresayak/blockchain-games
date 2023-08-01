@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { connect } from "react-redux";
-import { Alert, Col, Row, Table } from "reactstrap";
+import { Col, Row } from "reactstrap";
 import { ConfigType } from "../redux/reducers/systemReducer";
 import { PageTitle } from "../components/PageTitle";
 import { useParams } from "react-router-dom";
@@ -17,7 +17,6 @@ import {
 import { Contract } from "@ethersproject/contracts";
 import TicTacToeERC20Abi from "../contracts/game0TicTacToe/TicTacToeGame.sol/TicTacToeGame.json";
 import axios from "axios";
-import { toast } from "react-toastify";
 import { PlayTicTacToeModal } from "../components/modals/TicTacToe/PlayTicTacToeModal";
 import { CancelGameModal } from "../components/modals/CancelGameModal";
 import { TimeoutGameModal } from "../components/modals/TimeoutGameModal";
@@ -28,7 +27,6 @@ import moment from "moment";
 import { allowNetworks } from "../app";
 import { Steps } from "../components/modals/TicTacToe/Steps";
 import { WrongNetworkModal } from "../components/modals/WrongNetworkModal";
-import { utils } from "ethers";
 
 const GAME_STATUS_WAIT = 0;
 const GAME_STATUS_PROGRESS = 1;

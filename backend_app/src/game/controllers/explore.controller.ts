@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, Inject, NotFoundException, Param, ParseIntPipe, Sse } from "@nestjs/common";
+import { Controller, Get, Inject, NotFoundException, Param, ParseIntPipe, Sse } from "@nestjs/common";
 import { In, Repository } from "typeorm";
 import { GameEntity, Statuses } from "../entities";
 import { Observable } from "rxjs";
@@ -59,7 +59,8 @@ export class ExploreController {
     }
     const steps = await game.steps;
     return {
-      game, steps
+      game,
+      steps,
     };
   }
 

@@ -17,8 +17,9 @@ type PropType = {
   configs: ConfigType;
   game: GameDataType;
 }
+
 export function PlayTicTacToeModal(props: PropType) {
-  const { account, chainId, configs, game } = props;
+  const { account, game } = props;
   const [modal, setModal] = useState(false);
   const [allowanceBN, setAllowance] = useState<BigNumber>(BigNumber.from(0));
   const [errors, setErrors] = useState<any>({});
