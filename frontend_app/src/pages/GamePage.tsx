@@ -43,8 +43,8 @@ const sides = [
 ];
 
 
-const Timer = (props: {deadline: number, currentTime: number}) => {
-  const {deadline} = props;
+const Timer = (props: { deadline: number, currentTime: number }) => {
+  const { deadline } = props;
   const calc = () => Math.max(0, deadline - (Date.now() / 1000));
   const [diff, setDiff] = useState<number>(calc());
 
@@ -56,15 +56,15 @@ const Timer = (props: {deadline: number, currentTime: number}) => {
     return () => clearInterval(interval);
   }, []);
 
-  if(diff === undefined){
-    return <div></div>
+  if (diff === undefined) {
+    return <div></div>;
   }
-  const formatted = moment.utc(diff*1000).format('HH:mm:ss');
+  const formatted = moment.utc(diff * 1000).format("HH:mm:ss");
   return <div>
     time left:
     <h2>{formatted}</h2>
-  </div>
-}
+  </div>;
+};
 
 const Component = ({ configs }: { configs: ConfigType }) => {
   const { account, chainId } = useEthers();
@@ -74,31 +74,27 @@ const Component = ({ configs }: { configs: ConfigType }) => {
   if (!gameAddress || !ethers.utils.isAddress(gameAddress)) {
     return <Page404 />;
   }
-  const fetchData = ()=>{
+  const fetchData = () => {
     axios.get("/api/explore/" + chainId + "/details/" + gameAddress).then(({ data }: {
       data: { game: GameDataType }
     }) => {
-      console.log('set', data.game, chainId);
       setGameData(data.game);
-    }).catch((reason) => {
-      toast.error(reason.message);
     });
   };
 
   useEffect(() => {
-    const sse = new EventSource('/api/explore/'+chainId+'/sse',
+    const sse = new EventSource("/api/explore/" + chainId + "/sse/" + gameAddress,
       { withCredentials: true });
-    function getRealtimeData(data:any) {
-      console.log('data', data);
-      // process the data here,
-      // then pass it to state to be rendered
-    }
-    sse.onmessage = e => getRealtimeData(JSON.parse(e.data));
-    sse.onerror = () => {
-      // error log here
 
+    sse.onmessage = e => {
+      const data = JSON.parse(e.data);
+      if(data.game){
+        setGameData(data.game);
+      }
+    };
+    sse.onerror = () => {
       sse.close();
-    }
+    };
     return () => {
       sse.close();
     };
@@ -110,26 +106,25 @@ const Component = ({ configs }: { configs: ConfigType }) => {
     args: [],
   });
 
-  console.log('result', result?.value);
-
   useMemo(() => {
     if (chainId) {
       fetchData();
-    }else{
+    } else {
       setGameData(undefined);
     }
   }, [
     account, chainId, gameAddress,
   ]);
 
-  const chain = allowNetworks.find((chain)=>chain.chainId == chainId);
-  const needChain = allowNetworks.find((chain)=>chain.chainId == Number(needChainId));
+  const chain = allowNetworks.find((chain) => chain.chainId == chainId);
+  const needChain = allowNetworks.find((chain) => chain.chainId == Number(needChainId));
   return <>
     <div className="mt-5 py-5">
       <div className="mb-5">
-        <PageTitle title={'Blockchain Game Details'}/>
+        <PageTitle title={"Blockchain Game Details"} />
         <h5>{gameAddress}</h5>
-        {!!needChain && <WrongNetworkModal isOpen={(!chain || chain.chainId!==needChain.chainId)} chains={[needChain]}/>}
+        {!!needChain &&
+          <WrongNetworkModal isOpen={(!chain || chain.chainId !== needChain.chainId)} chains={[needChain]} />}
       </div>
       {gameData === null && result?.value && <>
         <div>
@@ -147,16 +142,15 @@ const Component = ({ configs }: { configs: ConfigType }) => {
             {!!gameData.factoryAddress && <FactoryWrap
               account={account} factoryAddress={gameData.factoryAddress} errors={errors} setErrors={setErrors}
               children={(factoryData) => {
-                console.log('factoryData', factoryData);
-
                 return <GameWrap
                   errors={errors} setErrors={setErrors} gameAddress={gameData.address} children={(gameStatusData) => {
-                  console.log("gameStatusData", gameStatusData);
                   const deadline = gameStatusData.lastStepTime + parseInt(gameData.params.timeoutTime);
+                  console.log('gameStatusData', gameStatusData, gameData);
+                  if(account === gameStatusData.player2) {
+                  }
                   return <TokenWrap
                     tokenAddress={gameData.tokenAddress} account={account} setErrors={setErrors}
                     spenderAddress={gameAddress} children={(tokenData: TokenDataType) => {
-                      console.log('balance', tokenData.balance, gameData.params.coins);
                     return <Row>
                       <Col sm={6}>
                         <dl className="row">
@@ -213,15 +207,15 @@ const Component = ({ configs }: { configs: ConfigType }) => {
                             {gameData?.creatorAddress == account ? <CancelGameModal gameAddress={gameAddress} /> : null}
                           </>
                           : null}
-                        {gameStatusData.status == GAME_STATUS_PROGRESS?<>
-                          <Timer deadline={deadline} currentTime={factoryData.currentTime}/>
-                        </>:null}
+                        {gameStatusData.status == GAME_STATUS_PROGRESS ? <>
+                          <Timer deadline={deadline} currentTime={factoryData.currentTime} />
+                        </> : null}
                         {gameStatusData.status == GAME_STATUS_PROGRESS && deadline < factoryData.currentTime ? <>
                           {gameData?.creatorAddress == account ? <TimeoutGameModal gameAddress={gameAddress} /> : null}
                         </> : null}
                         {gameStatusData.status == GAME_STATUS_PROGRESS && deadline > factoryData.currentTime ? <>
                           <StepTicTacToeModal gameAddress={gameAddress} />
-                        </>:null}
+                        </> : null}
                       </Col>
                     </Row>;
                   }} />;
@@ -230,7 +224,7 @@ const Component = ({ configs }: { configs: ConfigType }) => {
           </div>
           <div className="mb-3">
             <h3>Steps</h3>
-            <Steps chain={chain} gameAddress={gameAddress}/>
+            <Steps chain={chain} gameAddress={gameAddress} />
           </div>
         </>}
     </div>

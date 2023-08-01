@@ -84,7 +84,6 @@ export const CreateGameButton = (props: {
     }
   }, [state.status, attems, events]);
 
-  console.log('state', state);
   const createGame = useCallback(
     async (...args: any[]) => {
       const bytes = serialize({

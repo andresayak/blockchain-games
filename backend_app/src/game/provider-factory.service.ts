@@ -55,7 +55,6 @@ export class ProviderFactoryService {
     if (!this.chains[chainId]) {
       throw Error("wrong chain");
     }
-    console.log(this.chains[chainId]);
     if (type == "http") {
       return new ethers.JsonRpcProvider(this.chains[chainId].providerHttpUrl);
     }

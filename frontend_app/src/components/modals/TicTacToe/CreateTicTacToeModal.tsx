@@ -62,7 +62,6 @@ export function CreateTicTacToeModal(props: PropType) {
           tokenAddress={values.tokenAddress} account={account} setErrors={setErrors}
           spenderAddress={factoryAddress} children={(tokenData?: TokenDataType) => {
           const currentAllowanceBN = !tokenData || allowanceBN.gt(tokenData.allowanceBN) ? allowanceBN : tokenData.allowanceBN;
-          console.log('currentAllowanceBN='+currentAllowanceBN);
           if (!tokenData) {
             return <></>;
           }

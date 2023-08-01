@@ -1,5 +1,7 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { BaseEntity } from "../../common/base.entity";
+import { GamePlayerEntity } from "./game-player.entity";
+import { GameStepEntity } from "./game-step.entity";
 
 export enum Statuses {
   WAIT,
@@ -48,4 +50,16 @@ export class GameEntity extends BaseEntity<GameEntity> {
     nullable: false,
   })
   createdAt: Date;
+
+  @OneToMany(() => GameStepEntity, step => step.game, {
+    eager: true,
+  })
+  @JoinColumn({ referencedColumnName: "game_id" })
+  steps: Promise<GameStepEntity[]>;
+
+  @OneToMany(() => GamePlayerEntity, player => player.game, {
+    eager: true,
+  })
+  @JoinColumn({ referencedColumnName: "game_id" })
+  players: Promise<GamePlayerEntity[]>;
 }

@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from "@nestjs/typeorm";
 import { ConnectionOptions } from "typeorm";
 import { join } from "path";
+
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
   constructor(private configService: ConfigService) {}
@@ -19,7 +20,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       entities: [__dirname + "/../**/*.entity{.ts,.js}"],
       migrationsTableName: "custom_migration_table",
       migrations: [join(__dirname, "migrations/*{.ts,.js}")],
-      logging: true,
+      logging: false,
     };
   }
 
@@ -32,7 +33,8 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       password: this.configService.get("POSTGRES_PASSWORD"),
       database: this.configService.get("POSTGRES_DB"),
       autoLoadEntities: true,
-      synchronize: true,
+      synchronize: false,
+      logging: false,
     };
   }
 }

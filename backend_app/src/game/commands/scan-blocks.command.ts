@@ -121,7 +121,6 @@ export class ScanBlocksCommand {
         const factoryContract = new Contract(factory.address, Factory.abi, provider);
         const fragment = factoryContract.interface.getEvent(log.topics[0]);
         const args = factoryContract.interface.decodeEventLog(fragment, log.data, log.topics);
-        console.log("factoryLog", fragment, args);
         if (fragment) {
           if (fragment.name == "GameCreated") {
             await this.saveNewGame(args[0], args[1], factory.address, blockNumber, log.transactionHash, props);
@@ -146,7 +145,16 @@ export class ScanBlocksCommand {
             await this.saveEndGame(game);
           }
           if (fragment.name == "GameStep") {
-            await this.saveStepGame(blockNumber, log.transactionHash, args, game);
+            await this.saveStepGame(
+              blockNumber,
+              log.transactionHash,
+              {
+                side: Number(args[0]),
+                row: Number(args[1]),
+                col: Number(args[2]),
+              },
+              game,
+            );
           }
         }
       }
@@ -231,7 +239,7 @@ export class ScanBlocksCommand {
     const timeoutTime = await gameContract.timeoutTime();
     const coins = await gameContract.coins();
     const size = await gameContract.size();
-    const createdTime: bigint = await gameContract.createdTime();
+    const createdTime = Number(<bigint>await gameContract.createdTime());
 
     console.log("createdTime", createdTime);
     try {
@@ -253,7 +261,6 @@ export class ScanBlocksCommand {
         createdAt: new Date(Number(createdTime) * 1000),
       });
 
-      console.log("game", game);
       await this.gamePlayerRepository.save({
         gameId: game.id,
         address: creatorAddress,
@@ -265,13 +272,5 @@ export class ScanBlocksCommand {
         throw e;
       }
     }
-
-    console.log("game", {
-      tokenAddress,
-      timeoutTime,
-      coins,
-      size,
-      createdTime,
-    });
   }
 }

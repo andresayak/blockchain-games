@@ -1,5 +1,6 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { BaseEntity } from "../../common/base.entity";
+import { GameEntity } from "./game.entity";
 
 @Entity("games_steps")
 export class GameStepEntity extends BaseEntity<GameStepEntity> {
@@ -24,4 +25,8 @@ export class GameStepEntity extends BaseEntity<GameStepEntity> {
     nullable: false,
   })
   createdAt: Date;
+
+  @ManyToOne(() => GameEntity, game => game.steps)
+  @JoinColumn({ name: "game_id" })
+  game: Promise<GameEntity>;
 }

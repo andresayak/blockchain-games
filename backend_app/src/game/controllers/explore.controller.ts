@@ -1,8 +1,9 @@
-import { Controller, Get, Inject, Param, ParseIntPipe, Sse } from "@nestjs/common";
+import { BadRequestException, Controller, Get, Inject, NotFoundException, Param, ParseIntPipe, Sse } from "@nestjs/common";
 import { In, Repository } from "typeorm";
 import { GameEntity, Statuses } from "../entities";
 import { Observable } from "rxjs";
 import { NotificationService } from "../notification.service";
+import { ParseAddressPipe } from "../pipes/addres.pipe";
 
 @Controller("explore/:chainId")
 export class ExploreController {
@@ -46,20 +47,41 @@ export class ExploreController {
   }
 
   @Get("details/:address")
-  async details(@Param("chainId", ParseIntPipe) chainId: number, @Param("address") address: string) {
+  async details(@Param("chainId", ParseIntPipe) chainId: number, @Param("address", ParseAddressPipe) address: string) {
     const game = await this.gameRepository.findOne({
       where: {
         chainId,
         address,
       },
     });
+    if (!game) {
+      throw new NotFoundException();
+    }
+    const steps = await game.steps;
     return {
-      game,
+      game, steps
     };
   }
 
-  @Sse("sse")
-  sse(@Param("chainId", ParseIntPipe) chainId: number, @Param("address") address: string): Promise<Observable<any>> {
+  @Get("steps/:address")
+  async steps(@Param("chainId", ParseIntPipe) chainId: number, @Param("address", ParseAddressPipe) address: string) {
+    const game = await this.gameRepository.findOne({
+      where: {
+        chainId,
+        address,
+      },
+    });
+    if (!game) {
+      throw new NotFoundException();
+    }
+    const steps = await game.steps;
+    return {
+      steps,
+    };
+  }
+
+  @Sse("sse/:address")
+  sse(@Param("chainId", ParseIntPipe) chainId: number, @Param("address", ParseAddressPipe) address: string): Promise<Observable<any>> {
     return this.notificationService.handleConnection(chainId, address);
   }
 }

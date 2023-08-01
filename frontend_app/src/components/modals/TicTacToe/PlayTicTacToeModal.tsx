@@ -30,7 +30,7 @@ export function PlayTicTacToeModal(props: PropType) {
       <Button color="primary" onClick={toggle}>
         Play Game
       </Button>
-      <Modal isOpen={modal} size="lg" toggle={toggle}>
+      <Modal isOpen={modal} toggle={toggle}>
         <ModalHeader>Play a Tic Tac Toe Game</ModalHeader>
         {modal && <GameWrap
           setErrors={setErrors} errors={errors}
@@ -41,14 +41,6 @@ export function PlayTicTacToeModal(props: PropType) {
             const currentAllowanceBN = !tokenData || allowanceBN.gt(tokenData.allowanceBN) ? allowanceBN : tokenData.allowanceBN;
             return <>
               <ModalBody>
-                <dl className="row">
-                  <dt className="col-sm-3">Address</dt>
-                  <dd className="col-sm-9">{game.address}</dd>
-                </dl>
-                <dl className="row">
-                  <dt className="col-sm-3">Creator</dt>
-                  <dd className="col-sm-9">{game.creatorAddress}</dd>
-                </dl>
                 <dl className="row">
                   <dt className="col-sm-3">Created</dt>
                   <dd className="col-sm-9">
@@ -61,7 +53,10 @@ export function PlayTicTacToeModal(props: PropType) {
                 <dl className="row">
                   <dt className="col-sm-3">Bet</dt>
                   <dd
-                    className="col-sm-9">{ethers.utils.formatUnits(amountBN, tokenData?.decimals)} {tokenData?.name}</dd>
+                    className="col-sm-9">
+                    {ethers.utils.formatUnits(amountBN, tokenData?.decimals)} {tokenData?.name} ({tokenData?.symbol})
+                    <div className="small">Balance: {tokenData?.balance}</div>
+                  </dd>
                 </dl>
               </ModalBody>
               <ModalFooter>
